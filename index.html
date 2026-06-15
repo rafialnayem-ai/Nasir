@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -18,13 +19,32 @@
 </head>
 <body class="text-gray-800 font-sans">
 
+    <div id="loginModal" class="hidden fixed inset-0 bg-gray-100 flex justify-center items-center z-[100] p-4">
+        <div class="bg-white p-8 rounded-xl shadow-2xl w-full max-w-sm border border-gray-200">
+            <div class="flex justify-center mb-4">
+                <div class="bg-blue-600 text-white p-3 rounded-full shadow-md">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                </div>
+            </div>
+            <h2 class="text-2xl font-extrabold mb-6 text-center text-gray-800"></h2>
+            <form id="loginForm" class="space-y-5">
+                <div>
+                    <input type="password" id="adminPassword" placeholder="Enter Secure Password" class="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-600 outline-none transition" required>
+                </div>
+                <button type="submit" id="loginBtn" class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold text-lg hover:bg-blue-700 shadow-md transition">Secure Login</button>
+                <p id="loginError" class="text-red-500 text-sm text-center hidden font-semibold">Incorrect password!</p>
+            </form>
+        </div>
+    </div>
+
     <nav class="bg-blue-600 text-white p-4 shadow-md w-full">
-        <div class="max-w-6xl mx-auto flex justify-between items-center">
-            <h1 class="text-2xl font-bold">MIR NASIR</h1>
-            <div class="space-x-4">
-                <button onclick="switchTab('uploadTab')" class="hover:text-gray-200 font-semibold">Upload Video</button>
-                <button onclick="switchTab('notesTab'); loadNotes();" class="hover:text-gray-200 font-semibold">Notes</button>
-                <button onclick="switchTab('listTab'); loadVideos();" class="hover:text-gray-200 font-semibold">Video List</button>
+        <div class="max-w-6xl mx-auto flex justify-between items-center flex-wrap gap-4">
+            <h1 class="text-2xl font-bold tracking-wider">MIR NASIR</h1>
+            <div class="space-x-2 sm:space-x-4 flex items-center">
+                <button onclick="switchTab('uploadTab')" class="hover:text-blue-200 font-semibold transition">Upload</button>
+                <button onclick="switchTab('notesTab'); loadNotes();" class="hover:text-blue-200 font-semibold transition">Notes</button>
+                <button onclick="switchTab('listTab'); loadVideos();" class="hover:text-blue-200 font-semibold transition">Videos</button>
+                <button onclick="logout()" class="ml-4 bg-red-500 hover:bg-red-600 text-white px-4 py-1.5 rounded shadow transition font-bold text-sm">Logout</button>
             </div>
         </div>
     </nav>
@@ -60,10 +80,10 @@
 
     <!-- Upload Section -->
     <div id="uploadTab" class="max-w-4xl mx-auto mt-8 p-6 bg-white rounded-lg shadow-lg">
-        <h2 class="text-2xl font-bold mb-6 border-b pb-2">Upload New Video</h2>
+        <h2 class="text-2xl font-bold mb-6 border-b pb-2"></h2>
         <form id="uploadForm" class="space-y-4">
             <div id="dropZone" class="border-2 border-dashed border-gray-400 rounded-lg p-6 text-center hover:bg-gray-50 transition cursor-pointer relative">
-                <label class="block font-semibold mb-1 cursor-pointer">Select Video or Drag & Drop Here</label>
+                <label class="block font-semibold mb-1 cursor-pointer">Select Video or Drop Here</label>
                 <input type="file" id="videoFile" accept="video/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" required>
                 <p id="fileNameDisplay" class="text-sm text-gray-500 mt-2">No file selected</p>
             </div>
@@ -76,10 +96,11 @@
                 <textarea id="videoDesc" rows="4" class="w-full border p-2 rounded" required></textarea>
             </div>
             <div>
-                <label class="block font-semibold mb-1">Tags (separated by comma)</label>
+                <label class="block font-semibold mb-1">Tags
+</label>
                 <textarea id="videoTags" rows="2" class="w-full border p-2 rounded" required></textarea>
             </div>
-            <button type="submit" class="w-full bg-green-600 text-white py-3 rounded font-bold hover:bg-green-700 transition">Upload to Cloudinary</button>
+            <button type="submit" class="w-full bg-green-600 text-white py-3 rounded font-bold hover:bg-green-700 transition">Save</button>
         </form>
 
         <div id="uploadProgressContainer" class="hidden mt-6">
@@ -129,7 +150,8 @@
                     <textarea id="editVideoDesc" rows="4" class="w-full border p-2 rounded" required></textarea>
                 </div>
                 <div>
-                    <label class="block font-semibold mb-1">Tags (separated by comma)</label>
+                    <label class="block font-semibold mb-1">Tags
+</label>
                     <textarea id="editVideoTags" rows="2" class="w-full border p-2 rounded" required></textarea>
                 </div>
                 <div class="flex justify-end space-x-3 mt-4">
@@ -152,6 +174,35 @@
     </div>
 
     <!-- Toast Notification -->
+    <div id="deleteNoteModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-[60] p-4">
+        <div class="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full transform transition-all">
+            <h3 class="text-xl font-bold mb-3 text-gray-800 flex items-center">
+                <svg class="w-6 h-6 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                Delete Note
+            </h3>
+            <p class="mb-6 text-gray-600">Are you sure you want to delete this note?</p>
+            <div class="flex justify-end space-x-3">
+                <button onclick="closeDeleteNoteModal()" class="px-4 py-2 bg-gray-200 text-gray-800 font-semibold rounded hover:bg-gray-300 transition">Cancel</button>
+                <button id="confirmDeleteNoteBtn" class="px-4 py-2 bg-red-600 text-white font-semibold rounded hover:bg-red-700 shadow-md transition">Yes, Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="serverErrorModal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-[110] p-4">
+        <div class="bg-white p-6 rounded-lg shadow-2xl max-w-sm w-full text-center">
+            <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100 mb-4">
+                <svg class="h-10 w-10 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+            </div>
+            <h3 class="text-xl font-bold text-gray-900 mb-2">Connection Failed</h3>
+            <p class="text-gray-500 mb-6 text-sm">Server connection failed. Please check your internet connection or try again later.</p>
+            <button onclick="closeServerErrorModal()" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:text-sm">
+                Dismiss
+            </button>
+        </div>
+    </div>
+
     <div id="toastNotification" class="hidden fixed bottom-5 right-5 bg-gray-800 text-white px-4 py-3 rounded shadow-lg transition-opacity duration-300 flex items-center z-50">
         <span id="toastMessage"></span>
     </div>
@@ -160,6 +211,81 @@
         const API_BASE_URL = "https://nasir-backend.onrender.com"; 
 
         let deleteData = null;
+        let authToken = localStorage.getItem('adminToken') || '';
+
+        // Check authentication on load
+        document.addEventListener('DOMContentLoaded', () => {
+            if (!authToken) {
+                document.getElementById('loginModal').classList.remove('hidden');
+            }
+        });
+
+        // Show Server Error Modal
+        function showServerError() {
+            document.getElementById('serverErrorModal').classList.remove('hidden');
+        }
+
+        function closeServerErrorModal() {
+            document.getElementById('serverErrorModal').classList.add('hidden');
+        }
+
+        // Logout function
+        function logout() {
+            authToken = '';
+            localStorage.removeItem('adminToken');
+            document.getElementById('loginModal').classList.remove('hidden');
+            document.getElementById('adminPassword').value = '';
+            showToast('Logged out successfully!');
+        }
+
+        // Login Submit Handler
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const password = document.getElementById('adminPassword').value;
+            const btn = document.getElementById('loginBtn');
+            const errorMsg = document.getElementById('loginError');
+            btn.innerText = "Authenticating...";
+            
+            fetch(`${API_BASE_URL}/api/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ password })
+            })
+            .then(res => res.json())
+            .then(res => {
+                btn.innerText = "Secure Login";
+                if (res.success) {
+                    authToken = res.token;
+                    localStorage.setItem('adminToken', authToken);
+                    document.getElementById('loginModal').classList.add('hidden');
+                    errorMsg.classList.add('hidden');
+                    showToast('Logged in successfully!');
+                } else {
+                    errorMsg.classList.remove('hidden');
+                }
+            }).catch(() => {
+                btn.innerText = "Secure Login";
+                showServerError();
+            });
+        });
+
+        // Helper for Auth Headers
+        function getAuthHeaders(isJson = true) {
+            const headers = { 'Authorization': `Bearer ${authToken}` };
+            if (isJson) headers['Content-Type'] = 'application/json';
+            return headers;
+        }
+
+        // Helper to Handle Unauthorized Responses
+        function handleAuthResponse(res) {
+            if (res.status === 401 || res.status === 403) {
+                authToken = '';
+                localStorage.removeItem('adminToken');
+                document.getElementById('loginModal').classList.remove('hidden');
+                throw new Error('Unauthorized');
+            }
+            return res.json();
+        }
 
         function showToast(message) {
             const toast = document.getElementById('toastNotification');
@@ -179,8 +305,8 @@
         function loadNotes() {
             const container = document.getElementById('notesContainer');
             container.innerHTML = "<p>Loading notes...</p>";
-            fetch(`${API_BASE_URL}/api/notes`)
-            .then(res => res.json())
+            fetch(`${API_BASE_URL}/api/notes`, { headers: getAuthHeaders(false) })
+            .then(handleAuthResponse)
             .then(res => {
                 if (res.success && res.data.length > 0) {
                     window.notesList = res.data;
@@ -202,7 +328,7 @@
                     container.innerHTML = "<p class='text-gray-500'>No notes found.</p>";
                     window.notesList = [];
                 }
-            });
+            }).catch(e => container.innerHTML = "<p class='text-red-500'>Error loading notes.</p>");
         }
 
         function openNoteModal(id = null) {
@@ -247,10 +373,10 @@
 
             fetch(url, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: getAuthHeaders(),
                 body: JSON.stringify(noteData)
             })
-            .then(res => res.json())
+            .then(handleAuthResponse)
             .then(res => {
                 btn.disabled = false;
                 btn.innerText = originalText;
@@ -261,24 +387,52 @@
                 } else {
                     showToast('Error: ' + res.error);
                 }
+            }).catch(err => {
+                btn.disabled = false;
+                btn.innerText = originalText;
             });
         });
 
+        let noteToDelete = null;
+
         function deleteNote(id) {
-            if (!confirm("Are you sure you want to delete this note?")) return;
+            noteToDelete = id;
+            document.getElementById('deleteNoteModal').classList.remove('hidden');
+        }
+
+        function closeDeleteNoteModal() {
+            document.getElementById('deleteNoteModal').classList.add('hidden');
+            noteToDelete = null;
+        }
+
+        document.getElementById('confirmDeleteNoteBtn').addEventListener('click', function() {
+            if (!noteToDelete) return;
+            const btn = this;
+            const originalText = btn.innerText;
+            btn.innerText = "Deleting...";
+            btn.disabled = true;
+
             fetch(`${API_BASE_URL}/api/delete-note`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id })
+                headers: getAuthHeaders(),
+                body: JSON.stringify({ id: noteToDelete })
             })
-            .then(res => res.json())
+            .then(handleAuthResponse)
             .then(res => {
+                btn.innerText = originalText;
+                btn.disabled = false;
                 if (res.success) {
                     showToast('Note deleted!');
+                    closeDeleteNoteModal();
                     loadNotes();
                 }
+            }).catch(e => {
+                btn.innerText = originalText;
+                btn.disabled = false;
+                closeDeleteNoteModal();
+                showServerError();
             });
-        }
+        });
 
         function copyText(text) {
             navigator.clipboard.writeText(text).then(() => {
@@ -326,6 +480,7 @@
 
             const xhr = new XMLHttpRequest();
             xhr.open('POST', `${API_BASE_URL}/api/upload`, true);
+            xhr.setRequestHeader('Authorization', `Bearer ${authToken}`); // Token added here
 
             xhr.upload.onprogress = function(e) {
                 if (e.lengthComputable) {
@@ -340,6 +495,14 @@
             };
 
             xhr.onload = function() {
+                if (xhr.status === 401 || xhr.status === 403) {
+                    authToken = '';
+                    localStorage.removeItem('adminToken');
+                    document.getElementById('loginModal').classList.remove('hidden');
+                    document.getElementById('uploadProgressContainer').classList.add('hidden');
+                    return showToast('Session expired. Please login again.');
+                }
+                
                 const res = JSON.parse(xhr.responseText);
                 if (res.success) {
                     showToast('Upload Complete!');
@@ -360,14 +523,13 @@
             const container = document.getElementById('videoContainer');
             container.innerHTML = "<p>Loading videos...</p>";
 
-            fetch(`${API_BASE_URL}/api/videos`)
-            .then(res => res.json())
+            fetch(`${API_BASE_URL}/api/videos`, { headers: getAuthHeaders(false) })
+            .then(handleAuthResponse)
             .then(res => {
                 if (res.success && res.data.length > 0) {
-                    window.videosList = res.data; // Store for easy editing
+                    window.videosList = res.data;
                     container.innerHTML = "";
                     res.data.forEach(video => {
-                        // Generate a valid auto-thumbnail URL from Cloudinary video source link
                         const thumbUrl = video.video_url.replace(/\/upload\//, '/upload/c_fill,w_300,h_400,f_jpg/');
                         const card = document.createElement('div');
                         card.className = "bg-gray-50 border p-2 sm:p-4 rounded shadow relative";
@@ -417,15 +579,15 @@
                 } else {
                     container.innerHTML = "<p>No videos found.</p>";
                 }
-            });
+            }).catch(e => container.innerHTML = "<p class='text-red-500'>Error loading videos.</p>");
         }
 
         function updateStatus(id, status) {
             fetch(`${API_BASE_URL}/api/update-status`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: getAuthHeaders(),
                 body: JSON.stringify({ id, status })
-            }).then(() => showToast('Status updated!'));
+            }).then(handleAuthResponse).then(() => showToast('Status updated!')).catch(e => console.error(e));
         }
 
         function promptDelete(id, video_url) {
@@ -447,18 +609,21 @@
 
             fetch(`${API_BASE_URL}/api/delete`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: getAuthHeaders(),
                 body: JSON.stringify(deleteData)
-            }).then(res => res.json()).then(() => {
+            }).then(handleAuthResponse).then(() => {
                 btn.disabled = false;
                 btn.innerText = originalText;
                 closeModal();
                 loadVideos();
                 showToast('Video Deleted');
+            }).catch(err => {
+                btn.disabled = false;
+                btn.innerText = originalText;
             });
         });
 
-        // Download Video with Progress Tracking
+        // Download Video
         function downloadVideo(url, id, title) {
             const btn = document.getElementById(`btn-download-${id}`);
             const progressContainer = document.getElementById(`dl-progress-${id}`);
@@ -497,7 +662,6 @@
             xhr.send();
         }
 
-        // --- Action Menu Toggle ---
         function toggleActionMenu(id) {
             const menus = document.querySelectorAll('[id^="action-menu-"]');
             menus.forEach(menu => {
@@ -506,14 +670,12 @@
             document.getElementById(`action-menu-${id}`).classList.toggle('hidden');
         }
 
-        // Action menu close on click outside
         document.addEventListener('click', function(e) {
             if (!e.target.closest('.inline-block.w-full.text-left')) {
                 document.querySelectorAll('[id^="action-menu-"]').forEach(menu => menu.classList.add('hidden'));
             }
         });
 
-        // --- Video Player Functions ---
         function playVideo(id) {
             const video = window.videosList.find(v => v.id === id);
             if (!video) return;
@@ -536,7 +698,6 @@
             modal.classList.add('hidden');
         }
 
-        // --- Edit Video Functions ---
         function openEditModal(id) {
             const video = window.videosList.find(v => v.id === id);
             if (!video) return;
@@ -568,20 +729,17 @@
 
             fetch(`${API_BASE_URL}/api/update-video`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: getAuthHeaders(),
                 body: JSON.stringify(updateData)
             })
-            .then(async (res) => {
-                if (!res.ok) throw new Error('Server Error: ' + res.status);
-                return res.json();
-            })
+            .then(handleAuthResponse)
             .then(res => {
                 btn.disabled = false;
                 btn.innerText = originalText;
                 if (res.success) {
                     showToast('Video details updated successfully!');
                     closeEditModal();
-                    loadVideos(); // Auto refresh changes
+                    loadVideos();
                 } else {
                     showToast('Update failed: ' + res.error);
                 }
@@ -589,10 +747,6 @@
             .catch(err => {
                 btn.disabled = false;
                 btn.innerText = originalText;
-                showToast('Failed to connect. Did you restart the server?');
-                console.error('Update Error:', err);
             });
         });
     </script>
-</body>
-</html>
