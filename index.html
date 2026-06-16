@@ -84,8 +84,9 @@
         <form id="uploadForm" class="space-y-4">
             <div id="dropZone" class="border-2 border-dashed border-gray-400 rounded-lg p-6 text-center hover:bg-gray-50 transition cursor-pointer relative">
                 <label class="block font-semibold mb-1 cursor-pointer">Select Video or Drop Here</label>
-                <input type="file" id="videoFile" accept="video/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" required>
-                <p id="fileNameDisplay" class="text-sm text-gray-500 mt-2">No file selected</p>
+                <input type="file" id="videoFile" accept="video/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-0" required>
+                <p id="fileNameDisplay" class="text-sm text-gray-500 mt-2 relative z-0">No file selected</p>
+                <button type="button" id="clearFileBtn" class="hidden mt-3 bg-red-500 text-white px-3 py-1.5 rounded text-xs font-bold hover:bg-red-600 transition shadow-sm relative z-10">Clear Selection</button>
             </div>
             <div>
                 <label class="block font-semibold mb-1">Title</label>
@@ -444,6 +445,21 @@
         const fileInput = document.getElementById('videoFile');
         const dropZone = document.getElementById('dropZone');
         const fileNameDisplay = document.getElementById('fileNameDisplay');
+        const clearFileBtn = document.getElementById('clearFileBtn');
+
+        function clearSelectedFile() {
+            fileInput.value = "";
+            fileNameDisplay.innerText = "No file selected";
+            dropZone.classList.remove('bg-blue-50', 'border-blue-400');
+            clearFileBtn.classList.add('hidden');
+            document.getElementById('videoTitle').value = "";
+        }
+
+        clearFileBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            clearSelectedFile();
+        });
 
         fileInput.addEventListener('change', function() {
             if (this.files.length > 0) {
@@ -451,6 +467,9 @@
                 fileNameDisplay.innerText = file.name;
                 dropZone.classList.add('bg-blue-50', 'border-blue-400');
                 document.getElementById('videoTitle').value = file.name.replace(/\.[^/.]+$/, "");
+                clearFileBtn.classList.remove('hidden');
+            } else {
+                clearSelectedFile();
             }
         });
 
@@ -465,6 +484,7 @@
                 fileNameDisplay.innerText = file.name;
                 dropZone.classList.add('bg-blue-50', 'border-blue-400');
                 document.getElementById('videoTitle').value = file.name.replace(/\.[^/.]+$/, "");
+                clearFileBtn.classList.remove('hidden');
             }
         });
 
@@ -513,6 +533,7 @@
                     document.getElementById('uploadForm').reset();
                     fileNameDisplay.innerText = "No file selected";
                     dropZone.classList.remove('bg-blue-50', 'border-blue-400');
+                    document.getElementById('clearFileBtn').classList.add('hidden');
                 } else {
                     showToast('Upload Failed: ' + res.error);
                 }
