@@ -43,7 +43,7 @@
             <div class="space-x-2 sm:space-x-4 flex items-center">
                 <button onclick="switchTab('uploadTab')" class="hover:text-blue-200 font-semibold transition">Upload</button>
                 <button onclick="switchTab('notesTab'); loadNotes();" class="hover:text-blue-200 font-semibold transition">Notes</button>
-                <button onclick="switchTab('listTab'); loadVideos();" class="hover:text-blue-200 font-semibold transition">Videos</button>
+                <button onclick="switchTab('listTab'); loadVideos();" class="hover:text-blue-200 font-semibold transition">Media</button>
                 <button onclick="logout()" class="ml-4 bg-red-500 hover:bg-red-600 text-white px-4 py-1.5 rounded shadow transition font-bold text-sm">Logout</button>
             </div>
         </div>
@@ -83,8 +83,8 @@
         <h2 class="text-2xl font-bold mb-6 border-b pb-2"></h2>
         <form id="uploadForm" class="space-y-4">
             <div id="dropZone" class="border-2 border-dashed border-gray-400 rounded-lg p-6 text-center hover:bg-gray-50 transition cursor-pointer relative">
-                <label class="block font-semibold mb-1 cursor-pointer">Select Video or Drop Here</label>
-                <input type="file" id="videoFile" accept="video/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-0" required>
+                <label class="block font-semibold mb-1 cursor-pointer">Select Media or Drop Here</label>
+                <input type="file" id="videoFile" accept="video/*,image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-0" required>
                 <p id="fileNameDisplay" class="text-sm text-gray-500 mt-2 relative z-0">No file selected</p>
                 <button type="button" id="clearFileBtn" class="hidden mt-3 bg-red-500 text-white px-3 py-1.5 rounded text-xs font-bold hover:bg-red-600 transition shadow-sm relative z-10">Clear Selection</button>
             </div>
@@ -117,7 +117,7 @@
 
     <!-- Video List Section -->
     <div id="listTab" class="hidden max-w-6xl mx-auto mt-8 p-4 sm:p-6 bg-white rounded-lg shadow-lg">
-        <h2 class="text-2xl font-bold mb-6 border-b pb-2">My Videos</h2>
+        <h2 class="text-2xl font-bold mb-6 border-b pb-2">My Media</h2>
         <div id="videoContainer" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6"></div>
     </div>
 
@@ -125,14 +125,15 @@
     <div id="videoPlayerModal" class="hidden fixed inset-0 bg-black bg-opacity-80 flex justify-center items-center z-50 p-4">
         <div class="bg-white rounded-lg shadow-xl w-full max-w-4xl overflow-hidden relative">
             <div class="flex justify-between items-center p-4 bg-gray-100 border-b">
-                <h3 id="videoPlayerTitle" class="text-lg font-bold truncate pr-4">Play Video</h3>
+                <h3 id="videoPlayerTitle" class="text-lg font-bold truncate pr-4">View Media</h3>
                 <button onclick="closeVideoModal()" class="text-red-600 font-bold hover:text-red-800 text-2xl leading-none">&times;</button>
             </div>
-            <div class="p-0 bg-black flex justify-center aspect-video">
-                <video id="videoPlayer" controls class="w-full h-full max-h-[80vh] object-contain">
+            <div class="p-0 bg-black flex justify-center aspect-video relative">
+                <video id="videoPlayer" controls class="w-full h-full max-h-[80vh] object-contain hidden">
                     <source id="videoPlayerSource" src="" type="video/mp4">
                     Your browser does not support HTML video.
                 </video>
+                <img id="imagePlayer" src="" class="w-full h-full max-h-[80vh] object-contain hidden">
             </div>
         </div>
     </div>
@@ -581,7 +582,7 @@
                                 </select>
                             </div>
                             <div class="flex flex-col space-y-2 mt-4">
-                                <button onclick="downloadVideo('${video.video_url}', '${video.id}', '${video.title.replace(/'/g, "\\'")}')" id="btn-download-${video.id}" class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700">Download Video</button>
+                                <button onclick="downloadVideo('${video.video_url}', '${video.id}', '${video.title.replace(/'/g, "\\'")}')" id="btn-download-${video.id}" class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700">Download Media</button>
                                 <div id="dl-progress-${video.id}" class="hidden w-full bg-gray-200 rounded-full h-2 mt-1">
                                     <div id="dl-bar-${video.id}" class="bg-green-500 h-2 rounded-full" style="width: 0%"></div>
                                 </div>
@@ -675,13 +676,14 @@
                     const downloadUrl = window.URL.createObjectURL(blob);
                     const a = document.createElement('a');
                     a.href = downloadUrl;
-                    a.download = `${title}.mp4`;
+                    const isVideo = url.match(/\.(mp4|webm|ogg|mov|mkv)$/i) || url.includes('/video/upload/');
+                    a.download = isVideo ? `${title}.mp4` : `${title}.jpg`;
                     document.body.appendChild(a);
                     a.click();
                     a.remove();
                     window.URL.revokeObjectURL(downloadUrl);
                     btn.innerText = "Download Complete";
-                    setTimeout(() => { btn.innerText = "Download Video"; progressContainer.classList.add('hidden'); }, 3000);
+                    setTimeout(() => { btn.innerText = "Download Media"; progressContainer.classList.add('hidden'); }, 3000);
                 }
             };
             xhr.send();
@@ -707,12 +709,26 @@
             const modal = document.getElementById('videoPlayerModal');
             const player = document.getElementById('videoPlayer');
             const source = document.getElementById('videoPlayerSource');
+            const imgPlayer = document.getElementById('imagePlayer');
             
             document.getElementById('videoPlayerTitle').innerText = video.title;
-            source.src = video.video_url;
-            player.load();
+            
+            const isVideo = video.video_url.match(/\.(mp4|webm|ogg|mov|mkv)$/i) || video.video_url.includes('/video/upload/');
+            
+            if (isVideo) {
+                imgPlayer.classList.add('hidden');
+                player.classList.remove('hidden');
+                source.src = video.video_url;
+                player.load();
+                player.play();
+            } else {
+                player.classList.add('hidden');
+                player.pause();
+                imgPlayer.classList.remove('hidden');
+                imgPlayer.src = video.video_url;
+            }
+            
             modal.classList.remove('hidden');
-            player.play();
         }
 
         function closeVideoModal() {
