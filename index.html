@@ -89,16 +89,16 @@
             </div>
             <div>
                 <label class="block font-semibold mb-1">Title</label>
-                <input type="text" id="videoTitle" class="w-full border p-2 rounded" required>
+                <input type="text" id="videoTitle" class="w-full border p-2 rounded">
             </div>
             <div>
                 <label class="block font-semibold mb-1">Description</label>
-                <textarea id="videoDesc" rows="4" class="w-full border p-2 rounded" required></textarea>
+                <textarea id="videoDesc" rows="4" class="w-full border p-2 rounded"></textarea>
             </div>
             <div>
                 <label class="block font-semibold mb-1">Tags
 </label>
-                <textarea id="videoTags" rows="2" class="w-full border p-2 rounded" required></textarea>
+                <textarea id="videoTags" rows="2" class="w-full border p-2 rounded"></textarea>
             </div>
             <button type="submit" class="w-full bg-green-600 text-white py-3 rounded font-bold hover:bg-green-700 transition">Save</button>
         </form>
@@ -447,8 +447,10 @@
 
         fileInput.addEventListener('change', function() {
             if (this.files.length > 0) {
-                fileNameDisplay.innerText = this.files[0].name;
+                const file = this.files[0];
+                fileNameDisplay.innerText = file.name;
                 dropZone.classList.add('bg-blue-50', 'border-blue-400');
+                document.getElementById('videoTitle').value = file.name.replace(/\.[^/.]+$/, "");
             }
         });
 
@@ -458,9 +460,11 @@
             e.preventDefault();
             dropZone.classList.remove('bg-gray-100', 'border-blue-500');
             if (e.dataTransfer.files.length > 0) {
+                const file = e.dataTransfer.files[0];
                 fileInput.files = e.dataTransfer.files;
-                fileNameDisplay.innerText = e.dataTransfer.files[0].name;
+                fileNameDisplay.innerText = file.name;
                 dropZone.classList.add('bg-blue-50', 'border-blue-400');
+                document.getElementById('videoTitle').value = file.name.replace(/\.[^/.]+$/, "");
             }
         });
 
