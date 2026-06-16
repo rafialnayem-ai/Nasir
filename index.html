@@ -547,7 +547,7 @@
         // Load Videos
         function loadVideos() {
             const container = document.getElementById('videoContainer');
-            container.innerHTML = "<p>Loading videos...</p>";
+            container.innerHTML = "<p>Loading Media...</p>";
 
             fetch(`${API_BASE_URL}/api/videos`, { headers: getAuthHeaders(false) })
             .then(handleAuthResponse)
