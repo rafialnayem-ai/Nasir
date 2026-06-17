@@ -41,6 +41,7 @@
         <div class="max-w-6xl mx-auto flex justify-between items-center flex-wrap gap-4">
             <h1 class="text-2xl font-bold tracking-wider">MIR NASIR</h1>
             <div class="space-x-2 sm:space-x-4 flex items-center">
+                <button onclick="switchTab('promptTab')" class="hover:text-blue-200 font-semibold transition">Prompt</button>
                 <button onclick="switchTab('uploadTab')" class="hover:text-blue-200 font-semibold transition">Upload</button>
                 <button onclick="switchTab('notesTab'); loadNotes();" class="hover:text-blue-200 font-semibold transition">Notes</button>
                 <button onclick="switchTab('listTab'); loadVideos();" class="hover:text-blue-200 font-semibold transition">Media</button>
@@ -48,6 +49,38 @@
             </div>
         </div>
     </nav>
+
+    <!-- Prompt Section -->
+    <div id="promptTab" class="hidden max-w-6xl mx-auto mt-8 p-4 sm:p-6 bg-white rounded-lg shadow-lg">
+        <h2 class="text-2xl font-bold mb-6 border-b pb-2">Generate Prompt</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="space-y-4">
+                <div>
+                    <label class="block font-semibold mb-1 text-gray-700">Prompt Type</label>
+                    <select id="promptTypeSelect" class="w-full border border-gray-300 p-2 rounded focus:ring-2 focus:ring-blue-600 outline-none">
+                        <option value="start">Start short</option>
+                        <option value="next">Next Short</option>
+                    </select>
+                </div>
+                <div id="clothesInputContainer">
+                    <label class="block font-semibold mb-1 text-gray-700">Clothes</label>
+                    <textarea id="promptClothes" rows="2" class="w-full border border-gray-300 p-2 rounded focus:ring-2 focus:ring-blue-600 outline-none" placeholder="Enter clothes details..."></textarea>
+                </div>
+                <div>
+                    <label class="block font-semibold mb-1 text-gray-700">Dialogue</label>
+                    <textarea id="promptDialogue" rows="4" class="w-full border border-gray-300 p-2 rounded focus:ring-2 focus:ring-blue-600 outline-none" placeholder="Enter dialogue..."></textarea>
+                </div>
+                <button onclick="copyGeneratedPrompt()" class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold text-lg hover:bg-blue-700 shadow-md transition flex justify-center items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                    Copy Prompt
+                </button>
+            </div>
+            <div class="bg-gray-50 border border-gray-200 p-4 rounded-lg">
+                <label class="block font-semibold mb-2 text-gray-700">Live Preview</label>
+                <pre id="promptPreview" class="text-sm text-gray-600 whitespace-pre-wrap font-sans overflow-y-auto max-h-[400px]"></pre>
+            </div>
+        </div>
+    </div>
 
     <!-- Notes Section -->
     <div id="notesTab" class="hidden max-w-6xl mx-auto mt-8 p-4 sm:p-6 bg-white rounded-lg shadow-lg">
@@ -300,6 +333,7 @@
             document.getElementById('uploadTab').classList.add('hidden');
             document.getElementById('listTab').classList.add('hidden');
             if (document.getElementById('notesTab')) document.getElementById('notesTab').classList.add('hidden');
+            if (document.getElementById('promptTab')) document.getElementById('promptTab').classList.add('hidden');
             document.getElementById(tabId).classList.remove('hidden');
         }
 
@@ -807,4 +841,120 @@ function copyText(text) {
                 btn.innerText = originalText;
             });
         });
+
+        // --- Prompt Generation Logic ---
+        const basePromptTemplate = `Professional YouTube talking-head avatar video.
+
+Background:
+Light blue wall with a soft gradient, clean modern studio setup, realistic window shadow cast on the wall from the right side, subtle YouTube silver play button mounted on the wall, minimal and professional content creator environment.
+
+Microphone:
+Large black condenser microphone positioned directly in front of the speaker, professional podcast setup, clearly visible in the foreground.
+
+Avatar:
+Looking directly at the camera, speaking naturally, confident presenter posture, realistic facial expressions, natural eye contact, accurate lip sync, professional YouTube host appearance.
+
+Clothes:
+{CLOTHES}
+
+Lighting:
+Soft daylight from the right side, cinematic studio lighting, natural skin tones, balanced exposure, realistic shadows.
+
+Camera:
+Front-facing, eye-level, medium shot, static camera, centered composition, shallow depth of field.
+
+Speech Style:
+Friendly, engaging, confident, professional YouTuber tone.
+
+Dialogue Language: Bangla
+
+Dialogue:
+{DIALOGUE}
+
+Quality:
+Ultra realistic, 4K UHD, professional YouTube studio quality, sharp focus, cinematic color grading, highly detailed.
+
+Negative Prompt:
+extra people, extra microphones, blurry face, low quality, cartoon, anime, distorted body, distorted hands, duplicate objects, background changes, text overlays, subtitles, watermark, logo, camera shake, cropped face, overexposed lighting, messy background`;
+
+        const nextShortPromptTemplate = `Use the provided last-frame image as the MASTER REFERENCE FRAME.
+
+Create the next video scene as a direct continuation of that exact frame.
+
+STRICT CONSISTENCY RULES:
+
+* Keep the exact same character identity
+* Preserve facial structure, skin tone, eyes, nose, lips and age
+* Keep the exact same hairstyle
+* Keep the exact same clothing, accessories and colors
+* Keep the exact same microphone
+* Keep the exact same background and environment
+* Keep the exact same camera angle, framing and lens perspective
+* Keep the exact same lighting, shadows and color grading
+* Keep the exact same studio setup
+
+DO NOT change:
+
+* Face
+* Body shape
+* Hair
+* Outfit
+* Background
+* Camera position
+* Lighting
+* Character identity
+
+The video must look like it was recorded in the same continuous session only a few seconds later.
+
+Only update:
+
+* Mouth movement for speech
+* Natural blinking
+* Small head movements
+* Natural facial expressions matching the dialogue
+
+No scene transition.
+No camera movement.
+No zoom.
+No cuts.
+No new objects.
+No character replacement.
+
+Dialogue:
+{DIALOGUE}`;
+
+        function updatePromptPreview() {
+            const promptType = document.getElementById('promptTypeSelect')?.value || 'start';
+            const clothesContainer = document.getElementById('clothesInputContainer');
+            const clothesText = document.getElementById('promptClothes')?.value || '';
+            const dialogueText = document.getElementById('promptDialogue')?.value || '';
+            
+            let updatedPrompt = '';
+
+            if (promptType === 'start') {
+                if (clothesContainer) clothesContainer.classList.remove('hidden');
+                updatedPrompt = basePromptTemplate
+                    .replace('{CLOTHES}', clothesText)
+                    .replace('{DIALOGUE}', dialogueText);
+            } else {
+                if (clothesContainer) clothesContainer.classList.add('hidden');
+                updatedPrompt = nextShortPromptTemplate
+                    .replace('{DIALOGUE}', dialogueText);
+            }
+                
+            const previewEl = document.getElementById('promptPreview');
+            if(previewEl) previewEl.innerText = updatedPrompt;
+        }
+
+        document.getElementById('promptTypeSelect')?.addEventListener('change', updatePromptPreview);
+        document.getElementById('promptClothes')?.addEventListener('input', updatePromptPreview);
+        document.getElementById('promptDialogue')?.addEventListener('input', updatePromptPreview);
+
+        function copyGeneratedPrompt() {
+            const textToCopy = document.getElementById('promptPreview').innerText;
+            copyText(textToCopy);
+        }
+
+        // Initialize preview on load
+        updatePromptPreview();
     </script>
