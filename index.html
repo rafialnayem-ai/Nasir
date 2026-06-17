@@ -569,10 +569,10 @@
                                 </div>
                                 <h3 class="font-bold text-sm sm:text-lg mb-2 line-clamp-2" title="${video.title}">${video.title}</h3>
                                 <div class="flex flex-wrap gap-1">
-                                    <button onclick="copyText('${video.title.replace(/'/g, "\\'")}')" class="text-[10px] sm:text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">Copy Title</button>
-                                    <button onclick="copyText('${video.description.replace(/\n/g, '\\n').replace(/'/g, "\\'")}')" class="text-[10px] sm:text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">Copy Desc</button>
-                                    <button onclick="copyText('${video.tags.replace(/'/g, "\\'")}')" class="text-[10px] sm:text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">Copy Tags</button>
-                                </div>
+    <button onclick="copyVideoData('${video.id}', 'title')" class="text-[10px] sm:text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">Copy Title</button>
+    <button onclick="copyVideoData('${video.id}', 'description')" class="text-[10px] sm:text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">Copy Desc</button>
+    <button onclick="copyVideoData('${video.id}', 'tags')" class="text-[10px] sm:text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">Copy Tags</button>
+</div>
                             </div>
                             <div class="mb-4">
                                 <label class="text-xs font-semibold">Status:</label>
@@ -625,7 +625,24 @@
             document.getElementById('deleteModal').classList.add('hidden');
             deleteData = null;
         }
+function copyText(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                showToast('Copied to clipboard successfully!');
+            });
+        }
 
+        // --- ADD THIS NEW FUNCTION ---
+        function copyVideoData(id, type) {
+            const video = window.videosList.find(v => v.id === id);
+            if (!video) return;
+            
+            let textToCopy = '';
+            if (type === 'title') textToCopy = video.title || '';
+            else if (type === 'description') textToCopy = video.description || '';
+            else if (type === 'tags') textToCopy = video.tags || '';
+            
+            copyText(textToCopy);
+        }
         document.getElementById('confirmDeleteBtn').addEventListener('click', function() {
             if (!deleteData) return;
             const btn = this;
