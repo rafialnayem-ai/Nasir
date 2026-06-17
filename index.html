@@ -117,7 +117,7 @@
         <form id="uploadForm" class="space-y-4">
             <div id="dropZone" class="border-2 border-dashed border-gray-400 rounded-lg p-6 text-center hover:bg-gray-50 transition cursor-pointer relative">
                 <label class="block font-semibold mb-1 cursor-pointer">Select Media or Drop Here</label>
-                <input type="file" id="videoFile" accept="video/*,image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-0" required>
+                <input type="file" id="videoFile" accept="video/*,image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-0" multiple required>
                 <p id="fileNameDisplay" class="text-sm text-gray-500 mt-2 relative z-0">No file selected</p>
                 <button type="button" id="clearFileBtn" class="hidden mt-3 bg-red-500 text-white px-3 py-1.5 rounded text-xs font-bold hover:bg-red-600 transition shadow-sm relative z-10">Clear Selection</button>
             </div>
@@ -497,7 +497,12 @@
         });
 
         fileInput.addEventListener('change', function() {
-            if (this.files.length > 0) {
+            if (this.files.length > 1) {
+                fileNameDisplay.innerText = `${this.files.length} files selected`;
+                dropZone.classList.add('bg-blue-50', 'border-blue-400');
+                document.getElementById('videoTitle').value = "Batch Upload";
+                clearFileBtn.classList.remove('hidden');
+            } else if (this.files.length === 1) {
                 const file = this.files[0];
                 fileNameDisplay.innerText = file.name;
                 dropZone.classList.add('bg-blue-50', 'border-blue-400');
@@ -514,68 +519,111 @@
             e.preventDefault();
             dropZone.classList.remove('bg-gray-100', 'border-blue-500');
             if (e.dataTransfer.files.length > 0) {
-                const file = e.dataTransfer.files[0];
                 fileInput.files = e.dataTransfer.files;
-                fileNameDisplay.innerText = file.name;
-                dropZone.classList.add('bg-blue-50', 'border-blue-400');
-                document.getElementById('videoTitle').value = file.name.replace(/\.[^/.]+$/, "");
-                clearFileBtn.classList.remove('hidden');
+                fileInput.dispatchEvent(new Event('change')); // Trigger change logic
             }
         });
 
-        // Binary Upload Handler
-        document.getElementById('uploadForm').addEventListener('submit', function(e) {
+        // Binary Upload Handler (Multiple Files)
+        document.getElementById('uploadForm').addEventListener('submit', async function(e) {
             e.preventDefault();
-            const file = fileInput.files[0];
-            if (!file) return;
+            const files = Array.from(fileInput.files);
+            if (files.length === 0) return;
+
+            const submitBtn = this.querySelector('button[type="submit"]');
+            const originalBtnText = submitBtn.innerText;
+            submitBtn.disabled = true;
+            submitBtn.innerText = "Uploading...";
 
             document.getElementById('uploadProgressContainer').classList.remove('hidden');
 
-            const formData = new FormData();
-            formData.append('video', file);
-            formData.append('title', document.getElementById('videoTitle').value);
-            formData.append('description', document.getElementById('videoDesc').value);
-            formData.append('tags', document.getElementById('videoTags').value);
+            const baseTitle = document.getElementById('videoTitle').value;
+            const desc = document.getElementById('videoDesc').value;
+            const tags = document.getElementById('videoTags').value;
 
-            const xhr = new XMLHttpRequest();
-            xhr.open('POST', `${API_BASE_URL}/api/upload`, true);
-            xhr.setRequestHeader('Authorization', `Bearer ${authToken}`); // Token added here
+            let successCount = 0;
+            let failCount = 0;
 
-            xhr.upload.onprogress = function(e) {
-                if (e.lengthComputable) {
-                    const percent = Math.round((e.loaded / e.total) * 100);
-                    const mbLoaded = (e.loaded / (1024 * 1024)).toFixed(2);
-                    const mbTotal = (e.total / (1024 * 1024)).toFixed(2);
-                    
-                    document.getElementById('uploadPercent').innerText = percent + "%";
-                    document.getElementById('uploadBar').style.width = percent + "%";
-                    document.getElementById('uploadBytes').innerText = `(${mbLoaded} MB / ${mbTotal} MB)`;
-                }
-            };
-
-            xhr.onload = function() {
-                if (xhr.status === 401 || xhr.status === 403) {
-                    authToken = '';
-                    localStorage.removeItem('adminToken');
-                    document.getElementById('loginModal').classList.remove('hidden');
-                    document.getElementById('uploadProgressContainer').classList.add('hidden');
-                    return showToast('Session expired. Please login again.');
-                }
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
                 
-                const res = JSON.parse(xhr.responseText);
-                if (res.success) {
-                    showToast('Upload Complete!');
-                    document.getElementById('uploadForm').reset();
-                    fileNameDisplay.innerText = "No file selected";
-                    dropZone.classList.remove('bg-blue-50', 'border-blue-400');
-                    document.getElementById('clearFileBtn').classList.add('hidden');
-                } else {
-                    showToast('Upload Failed: ' + res.error);
-                }
-                document.getElementById('uploadProgressContainer').classList.add('hidden');
-            };
+                // Set title: append number if multiple, otherwise use original file name if blank
+                let currentTitle = baseTitle;
+                if (files.length > 1 && baseTitle === "Batch Upload") currentTitle = file.name.replace(/\.[^/.]+$/, "");
+                else if (files.length > 1 && baseTitle) currentTitle = `${baseTitle} - Part ${i + 1}`;
+                else if (!currentTitle) currentTitle = file.name.replace(/\.[^/.]+$/, "");
 
-            xhr.send(formData);
+                try {
+                    await new Promise((resolve, reject) => {
+                        const formData = new FormData();
+                        formData.append('video', file);
+                        formData.append('title', currentTitle);
+                        formData.append('description', desc);
+                        formData.append('tags', tags);
+
+                        const xhr = new XMLHttpRequest();
+                        xhr.open('POST', `${API_BASE_URL}/api/upload`, true);
+                        xhr.setRequestHeader('Authorization', `Bearer ${authToken}`);
+
+                        xhr.upload.onprogress = function(event) {
+                            if (event.lengthComputable) {
+                                const percent = Math.round((event.loaded / event.total) * 100);
+                                const mbLoaded = (event.loaded / (1024 * 1024)).toFixed(2);
+                                const mbTotal = (event.total / (1024 * 1024)).toFixed(2);
+                                
+                                document.getElementById('uploadPercent').innerText = percent + "%";
+                                document.getElementById('uploadBar').style.width = percent + "%";
+                                document.getElementById('uploadBytes').innerText = `File ${i + 1} of ${files.length} (${mbLoaded} MB / ${mbTotal} MB)`;
+                            }
+                        };
+
+                        xhr.onload = function() {
+                            if (xhr.status === 401 || xhr.status === 403) {
+                                authToken = '';
+                                localStorage.removeItem('adminToken');
+                                document.getElementById('loginModal').classList.remove('hidden');
+                                reject('Session expired');
+                                return;
+                            }
+                            
+                            try {
+                                const res = JSON.parse(xhr.responseText);
+                                if (res.success) {
+                                    resolve(res);
+                                } else {
+                                    reject(res.error || 'Upload failed');
+                                }
+                            } catch (err) {
+                                reject('Invalid server response');
+                            }
+                        };
+                        
+                        xhr.onerror = () => reject('Network error');
+                        xhr.send(formData);
+                    });
+                    successCount++;
+                } catch (error) {
+                    console.error("Upload error for file", file.name, error);
+                    failCount++;
+                    if (error === 'Session expired') break; // Stop loop if auth token is dead
+                }
+            }
+
+            // Cleanup after all uploads finish
+            document.getElementById('uploadProgressContainer').classList.add('hidden');
+            submitBtn.disabled = false;
+            submitBtn.innerText = originalBtnText;
+
+            if (successCount > 0 && failCount === 0) {
+                showToast(`Successfully uploaded ${successCount} file(s)!`);
+                document.getElementById('uploadForm').reset();
+                clearSelectedFile();
+            } else if (successCount > 0 && failCount > 0) {
+                showToast(`Uploaded ${successCount} file(s), ${failCount} failed.`);
+                clearSelectedFile();
+            } else {
+                showToast('Upload Failed.');
+            }
         });
 
         // Load Videos
